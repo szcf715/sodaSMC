@@ -1,3 +1,4 @@
+library(MASS)
 # simulation
 mu1 = c(0.5, 0, 0)
 mu2 = c(-0.5, 0, 0)
@@ -36,7 +37,7 @@ QX <- function(x)
 # points(df[101:200,1],df[101:200,2], col = "red")
 
 ## generate dataset
-genDataset <- function(n)
+genDataset <- function(n, which.example)
 {
   ## class 1
   df1 = mvrnorm(n, mu1, solve(omega1))
@@ -45,8 +46,28 @@ genDataset <- function(n)
   df = as.data.frame(rbind(df1, df0))
   
   trueclass = c(rep(2,n),rep(1,n))
-  res = list(df = df, trueclass = trueclass)
+  #res = list(df = df, trueclass = trueclass)
+  
+  ## construct matrix X
+  X = df[1:3]
+  for (i in c(1:47))
+  {
+    X = cbind(X, example(df, which.example)) 
+  }
+  colnames(X) = paste0('X', c(1:50))
+  
+  res = list(X = X, Y = trueclass)
   return(res)
+}
+
+genDataset2 <- function(n)
+{
+  x1 = runif(n)
+  x2 = runif(n)
+  Y = 25*x1 + 25*x2
+  xother = sapply(1:48, function(i) rnorm(n,0, 0.1))
+  X = cbind(x1, x2, xother)
+  res = list(X = X, Y = Y)
 }
 
 example <- function(df, which.example)

@@ -1,40 +1,5 @@
-## main effect
-
-## resampling
-
-## 
-k = 1
-origin = 1:n
-## initialization
-x = sapply(1:m, function(x) sample(n, 1))
-while(TRUE)
-{
-  if (k >= n)
-    break
-  ## calculate the weights
-  xx = sapply(1:m, function(i) origin[-x[i,]][sample(n-k, 1)])
-  weight = calc_lda_BIC(xx)
-  ## scale 
-  weight = weight/sum(weight)
-  ## resampling according to the weights
-  id = sample(1:m, m, replace = TRUE, prob = weight)
-  x = cbind(x, xx)
-  x = x[id, ]
-  k = k + 1
-}
-
-x1 = origin[-x0][sample(n-1, 1)]
-
-## generate x1
-## calculate weights
-
-## TODO
-EBIC = calc_BIC(x0)
-
-w = EBIC/sum(EBIC)
-
-## resampling
-
+library(MASS)
+library(nnet)
 
 calc_lda_BIC = function(xx, yy, cur_set, D, K, debug=F, gam=0)
 {
@@ -75,7 +40,7 @@ calc_lda_BIC = function(xx, yy, cur_set, D, K, debug=F, gam=0)
 #     gam: gamma in EBIC
 #   terms: selected linear and interaction terms
 #
-calc_BIC = function(xx, yy, terms, D, K, debug=F, gam=0)
+calc_BIC = function(xx, yy, terms, debug=F, gam=0)
 {
   N = length(yy);
   D = ncol(xx);
@@ -100,7 +65,9 @@ calc_BIC = function(xx, yy, terms, D, K, debug=F, gam=0)
   } 
   else
   {
-    pmatrix = create_pmatrix_from_terms(xx, terms);
+    #pmatrix = create_pmatrix_from_terms(xx, terms);
+    #pmatrix = xx[,terms] # NOT WORK
+    pmatrix = as.matrix(xx[,terms])
     # as.factor 效果一样
     #cat(is.factor(yy))
     #yy[yy == 2] <- 10
@@ -115,4 +82,52 @@ calc_BIC = function(xx, yy, terms, D, K, debug=F, gam=0)
     return(BIC);
   }
 }
+
+
+## dataset
+#data = genDataset(100, 1)
+data = genDataset2(100)
+xdata = data$X
+ydata = data$Y
+## main effect
+
+## resampling
+
+## 
+k = 0
+n = 50
+m = 50
+origin = 1:n
+## initialization
+x = sapply(1:m, function(x) sample(n, 1))
+x = as.matrix(x)
+while(TRUE)
+{
+  if (k >= 2)
+    break
+  if (k != 0)
+  {
+  xx = sapply(1:m, function(i) origin[-x[i,]][sample(n-k, 1)])
+  ## before sampling
+  xx0 = xx
+  x0 = x
+  x = cbind(x, xx)
+  # weight = calc_lda_BIC(xx)
+  # weight = calc_BIC(xdata[xx], ydata)
+  }
+  weight = sapply(1:m, function(i) calc_BIC(xdata, ydata, x[i, ]))
+  
+  ## scale 
+  weight = weight/sum(weight)
+  cat(weight)
+  ## resampling according to the weights
+  id = sample(1:m, m, replace = TRUE, prob = weight)
+  ## after sampling
+  ## x = cbind(x0, xx0[id])
+  x = x[id, ]
+  if (!is.matrix(x))
+    x = as.matrix(x)
+  k = k + 1
+}
+
 
